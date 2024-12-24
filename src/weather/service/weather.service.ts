@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  CurrentWeatherDTO,
-  CurrentWeatherResponse,
-} from '../dto/current-weather.dto';
+import { WeatherDTO } from '../dto/current-weather.dto';
 
 @Injectable()
 export class WeatherService {
@@ -20,23 +17,10 @@ export class WeatherService {
     }
   }
 
-  async getCurrentWeather(params: CurrentWeatherDTO) {
+  getCurrentWeather(params: WeatherDTO) {
     const { lat, lon } = params;
-    if (this.validateCoordenates({ lat, lon })) {
-      return this.fetchCurrentWeather({ lat, lon });
-    }
-  }
-
-  async fetchCurrentWeather(params: {
-    lat: number;
-    lon: number;
-  }): Promise<CurrentWeatherResponse> {
-    const request = await fetch(
-      `${this.BASE_URL}/weather?lat=${params.lat}&lon=${params.lon}&appid=${this.API_KEY}`,
-      {},
-    );
-    const body = (await request.json()) as CurrentWeatherResponse;
-    return body;
+    this.validateCoordenates({ lat, lon });
+    return this.fetchWeatherApi({ lat, lon, url: 'weather' });
   }
 
   validateCity(city?: string) {
@@ -44,6 +28,27 @@ export class WeatherService {
   }
 
   validateCoordenates(params: { lat?: number; lon?: number }) {
-    return params.lat != undefined && params.lon != undefined;
+    if (params.lat != undefined && params.lon != undefined) {
+      throw new Error('Invalid coordenates');
+    }
+  }
+
+  getForecast(params: WeatherDTO) {
+    const { lat, lon } = params;
+    this.validateCoordenates({ lat, lon });
+    return this.fetchWeatherApi({ lat, lon, url: 'forecast' });
+  }
+
+  private async fetchWeatherApi<T>(params: {
+    lat: number;
+    lon: number;
+    url: string;
+  }) {
+    const request = await fetch(
+      `${this.BASE_URL}/${params.url}?lat=${params.lat}&lon=${params.lon}&appid=${this.API_KEY}`,
+      {},
+    );
+    const body = (await request.json()) as T;
+    return body;
   }
 }
