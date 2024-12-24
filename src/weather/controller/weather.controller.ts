@@ -1,4 +1,10 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Get, Version } from '@nestjs/common';
 
 @Controller('weather')
-export class WeatherController {}
+export class WeatherController {
+  @Get('hello')
+  @Version('1')
+  helloWorld() {
+    return 'Hello World!';
+  }
+}
