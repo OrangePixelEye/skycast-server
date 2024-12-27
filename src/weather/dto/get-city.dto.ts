@@ -1,4 +1,4 @@
-export class GetCityError {
+export class FetchCityError {
   errors: Array<{
     code: number;
     title: string;
@@ -7,7 +7,7 @@ export class GetCityError {
   }>;
 }
 
-export interface GetCityResponse {
+export interface FetchCityResponse {
   meta: {
     count: number;
   };
@@ -25,4 +25,12 @@ export interface GetCityResponse {
       longtitude: number;
     };
   }>;
+}
+
+export interface GetCityResponse {
+  city: string;
+  state: string;
+  country: string;
+  lat: number;
+  lon: number;
 }

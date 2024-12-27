@@ -3,7 +3,11 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { GetCityError, GetCityResponse } from '../dto/get-city.dto';
+import {
+  FetchCityError,
+  FetchCityResponse,
+  GetCityResponse,
+} from '../dto/get-city.dto';
 import { WeatherDTO } from '../dto/current-weather.dto';
 
 @Injectable()
@@ -68,12 +72,19 @@ export class WeatherService {
       },
     );
 
-    const body = (await request.json()) as GetCityError | GetCityResponse;
-    if (body instanceof GetCityError) {
-      throw new InternalServerErrorException(body.errors[0].title);
+    const body = (await request.json()) as FetchCityError | FetchCityResponse;
+    if ((body as FetchCityError).errors != undefined) {
+      throw new InternalServerErrorException((body as FetchCityError).errors[0].title);
     }
-
-    return body.data;
+    return (body as unknown as FetchCityResponse).data.map((value) => {
+      return {
+        city: value.name,
+        country: value.address.countryCode,
+        state: value.address.stateCode,
+        lat: value.geoCode.latitude,
+        lon: value.geoCode.longtitude,
+      };
+    }) as Array<GetCityResponse>;
   }
 
   private async fetchWeatherApi<T>(params: {
