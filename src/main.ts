@@ -5,6 +5,7 @@ import { VersioningType } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix('api');
+  app.enableCors();
   app.enableVersioning({
     defaultVersion: '1',
     type: VersioningType.URI,

@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
+import { GetCityError, GetCityResponse } from '../dto/get-city.dto';
 import { WeatherDTO } from '../dto/current-weather.dto';
 
 @Injectable()
@@ -53,7 +58,7 @@ export class WeatherService {
   async getGeolocation(params: WeatherDTO) {
     const { city } = params;
     this.validateCity(city);
-    // todo: types
+
     const request = await fetch(
       `${process.env.AMADEUS_API_URL}reference-data/locations/cities?keyword=${city}&max=8`,
       {
@@ -62,8 +67,13 @@ export class WeatherService {
         },
       },
     );
-    const body = await request.json();
-    return body;
+
+    const body = (await request.json()) as GetCityError | GetCityResponse;
+    if (body instanceof GetCityError) {
+      throw new InternalServerErrorException(body.errors[0].title);
+    }
+
+    return body.data;
   }
 
   private async fetchWeatherApi<T>(params: {
