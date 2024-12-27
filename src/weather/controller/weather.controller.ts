@@ -1,5 +1,5 @@
 import { Controller, Get, Query, Version } from '@nestjs/common';
-import { CurrentWeatherDTO } from '../dto/current-weather.dto';
+import { WeatherDTO } from '../dto/current-weather.dto';
 import { WeatherService } from '../service/weather.service';
 
 @Controller('weather')
@@ -13,17 +13,19 @@ export class WeatherController {
 
   @Get('current')
   @Version('1')
-  getCurrent(@Query() query: CurrentWeatherDTO) {
+  getCurrent(@Query() query: WeatherDTO) {
     return this.service.getCurrentWeather(query);
   }
 
   @Get('forecast')
-  getForecast() {
-    return 'Wip';
+  @Version('1')
+  getForecast(@Query() query: WeatherDTO) {
+    return this.service.getForecast(query);
   }
 
-  @Get('historical')
-  getHistorical() {
-    return 'Wip';
+  @Get('geolocation')
+  @Version('1')
+  getGeolocation(@Query() query: WeatherDTO) {
+    return this.service.getGeolocation(query);
   }
 }

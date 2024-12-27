@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { WeatherDTO } from '../dto/current-weather.dto';
 
 @Injectable()
@@ -24,12 +24,23 @@ export class WeatherService {
   }
 
   validateCity(city?: string) {
-    return city != undefined && city !== '';
+    const hasNumberRegex = /\d/;
+    if (city == undefined || city === '') {
+      throw new BadRequestException('City must not be empty');
+    }
+    if (city.length < 3 || city.length > 50) {
+      throw new BadRequestException(
+        'City name must be between 3 and 50 characters!',
+      );
+    }
+    if (hasNumberRegex.test(city)) {
+      throw new BadRequestException('City should not include numbers');
+    }
   }
 
   validateCoordenates(params: { lat?: number; lon?: number }) {
-    if (params.lat != undefined && params.lon != undefined) {
-      throw new Error('Invalid coordenates');
+    if (params.lat == undefined || params.lon == undefined) {
+      throw new BadRequestException('Invalid coordenates');
     }
   }
 
@@ -37,6 +48,22 @@ export class WeatherService {
     const { lat, lon } = params;
     this.validateCoordenates({ lat, lon });
     return this.fetchWeatherApi({ lat, lon, url: 'forecast' });
+  }
+
+  async getGeolocation(params: WeatherDTO) {
+    const { city } = params;
+    this.validateCity(city);
+    // todo: types
+    const request = await fetch(
+      `${process.env.AMADEUS_API_URL}reference-data/locations/cities?keyword=${city}&max=8`,
+      {
+        headers: {
+          Authorization: 'Bearer ' + process.env.AMADEUS_TOKEN,
+        },
+      },
+    );
+    const body = await request.json();
+    return body;
   }
 
   private async fetchWeatherApi<T>(params: {

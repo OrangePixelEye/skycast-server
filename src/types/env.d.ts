@@ -7,6 +7,8 @@ declare global {
       PORT: number;
       OPEN_WEATHER_KEY: string;
       OPEN_WEATHER_URL: string;
+      AMADEUS_API_URL: string;
+      AMADEUS_TOKEN: string;
     }
   }
 }
