@@ -1,0 +1,23 @@
+version: '3.9'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: .docker/node/Dockerfile
+    ports:
+      - '3000:3000'
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      - redis
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    entrypoint: sh -c "npm run ${APP_MODE:-start}"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
