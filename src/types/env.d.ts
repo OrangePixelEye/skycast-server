@@ -9,6 +9,8 @@ declare global {
       OPEN_WEATHER_URL: string;
       AMADEUS_API_URL: string;
       AMADEUS_TOKEN: string;
+      REDIS_HOST: string;
+      REDIS_PORT: number;
     }
   }
 }

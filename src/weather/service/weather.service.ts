@@ -9,13 +9,14 @@ import {
   GetCityResponse,
 } from '../dto/get-city.dto';
 import { WeatherDTO } from '../dto/current-weather.dto';
+import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class WeatherService {
   private API_KEY: string;
   private BASE_URL: string;
 
-  constructor() {
+  constructor(protected readonly redisService: RedisService) {
     this.API_KEY = process.env.OPEN_WEATHER_KEY;
     this.BASE_URL = process.env.OPEN_WEATHER_URL;
     if (this.API_KEY === '') {
@@ -98,5 +99,9 @@ export class WeatherService {
     );
     const body = (await request.json()) as T;
     return body;
+  }
+
+  private async refreshToken() {
+    //todo
   }
 }
