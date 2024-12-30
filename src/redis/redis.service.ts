@@ -11,12 +11,12 @@ export class RedisService {
     });
   }
 
-  async getItem(name: string) {
+  getItem(name: string) {
     return this.redis.get(name);
   }
 
   // todo: include objects
-  async setItem(name: string, value: string | number) {
-    return this.redis.set(name, value);
+  setItem(name: string, value: string | number) {
+    return this.redis.setex(name, 1795, value);
   }
 }

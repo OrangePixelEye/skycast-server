@@ -63,19 +63,21 @@ export class WeatherService {
   async getGeolocation(params: WeatherDTO) {
     const { city } = params;
     this.validateCity(city);
-
+    const token = await this.getToken();
     const request = await fetch(
       `${process.env.AMADEUS_API_URL}reference-data/locations/cities?keyword=${city}&max=8`,
       {
         headers: {
-          Authorization: 'Bearer ' + process.env.AMADEUS_TOKEN,
+          Authorization: 'Bearer ' + token,
         },
       },
     );
 
     const body = (await request.json()) as FetchCityError | FetchCityResponse;
     if ((body as FetchCityError).errors != undefined) {
-      throw new InternalServerErrorException((body as FetchCityError).errors[0].title);
+      throw new InternalServerErrorException(
+        (body as FetchCityError).errors[0].title,
+      );
     }
     return (body as unknown as FetchCityResponse).data.map((value) => {
       return {
@@ -101,7 +103,37 @@ export class WeatherService {
     return body;
   }
 
-  private async refreshToken() {
-    //todo
+  private async getToken() {
+    // todo: Create a constant
+    let token = await this.redisService.getItem('AMADEUS.TOKEN');
+    if (token == null) {
+      token = await this.refreshToken();
+    }
+    return token;
+  }
+
+  private async refreshToken(): Promise<string> {
+    const clientId = process.env.AMADEUS_TOKEN;
+    const clientSecret = process.env.AMADEUS_SECRET_KEY;
+    const request = await fetch(
+      'https://test.api.amadeus.com/v1/security/oauth2/token',
+      {
+        method: 'POST', 
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded', 
+        },
+        body: new URLSearchParams({
+          grant_type: 'client_credentials',
+          client_id: clientId,
+          client_secret: clientSecret,
+        }).toString(), 
+      },
+    );
+    const body = await request.json();
+    if (body.access_token) {
+      await this.redisService.setItem('AMADEUS.TOKEN', body.access_token);
+      return body.access_token;
+    }
+    throw new InternalServerErrorException('Could not generate AMADEUS token');
   }
 }
