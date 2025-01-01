@@ -1,13 +1,5 @@
-import {
-  BadRequestException,
-  Injectable,
-  InternalServerErrorException,
-} from '@nestjs/common';
-import {
-  FetchCityError,
-  FetchCityResponse,
-  GetCityResponse,
-} from '../dto/get-city.dto';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { FetchGeolocationResponse } from '../dto/get-city.dto';
 import { WeatherDTO } from '../dto/current-weather.dto';
 import { RedisService } from 'src/redis/redis.service';
 
@@ -60,34 +52,15 @@ export class WeatherService {
     return this.fetchWeatherApi({ lat, lon, url: 'forecast' });
   }
 
-  async getGeolocation(params: WeatherDTO) {
+  async getGeolocationByCity(params: WeatherDTO) {
     const { city } = params;
     this.validateCity(city);
-    const token = await this.getToken();
+    const limit = 5;
     const request = await fetch(
-      `${process.env.AMADEUS_API_URL}reference-data/locations/cities?keyword=${city}&max=8`,
-      {
-        headers: {
-          Authorization: 'Bearer ' + token,
-        },
-      },
+      `http://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=${limit}&appid=${this.API_KEY}`,
     );
-
-    const body = (await request.json()) as FetchCityError | FetchCityResponse;
-    if ((body as FetchCityError).errors != undefined) {
-      throw new InternalServerErrorException(
-        (body as FetchCityError).errors[0].title,
-      );
-    }
-    return (body as unknown as FetchCityResponse).data.map((value) => {
-      return {
-        city: value.name,
-        country: value.address.countryCode,
-        state: value.address.stateCode,
-        lat: value.geoCode.latitude,
-        lon: value.geoCode.longtitude,
-      };
-    }) as Array<GetCityResponse>;
+    const body = (await request.json()) as FetchGeolocationResponse;
+    return body;
   }
 
   private async fetchWeatherApi<T>(params: {
@@ -101,39 +74,5 @@ export class WeatherService {
     );
     const body = (await request.json()) as T;
     return body;
-  }
-
-  private async getToken() {
-    // todo: Create a constant
-    let token = await this.redisService.getItem('AMADEUS.TOKEN');
-    if (token == null) {
-      token = await this.refreshToken();
-    }
-    return token;
-  }
-
-  private async refreshToken(): Promise<string> {
-    const clientId = process.env.AMADEUS_TOKEN;
-    const clientSecret = process.env.AMADEUS_SECRET_KEY;
-    const request = await fetch(
-      'https://test.api.amadeus.com/v1/security/oauth2/token',
-      {
-        method: 'POST', 
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded', 
-        },
-        body: new URLSearchParams({
-          grant_type: 'client_credentials',
-          client_id: clientId,
-          client_secret: clientSecret,
-        }).toString(), 
-      },
-    );
-    const body = await request.json();
-    if (body.access_token) {
-      await this.redisService.setItem('AMADEUS.TOKEN', body.access_token);
-      return body.access_token;
-    }
-    throw new InternalServerErrorException('Could not generate AMADEUS token');
   }
 }

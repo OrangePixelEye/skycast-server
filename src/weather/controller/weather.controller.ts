@@ -26,6 +26,6 @@ export class WeatherController {
   @Get('geolocation')
   @Version('1')
   getGeolocation(@Query() query: WeatherDTO) {
-    return this.service.getGeolocation(query);
+    return this.service.getGeolocationByCity(query);
   }
 }
