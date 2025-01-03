@@ -5,17 +5,23 @@ services:
     build:
       context: .
       dockerfile: .docker/node/Dockerfile
+    develop:
+      watch:
+      - action: sync
+        path: ./src
+        target: /src/app
+        ignore:
+          - node_modules/
+      - action: rebuild
+        path: package.json
     ports:
       - '3000:3000'
-    volumes:
-      - .:/app
-      - /app/node_modules
     depends_on:
       - redis
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
-    entrypoint: sh -c "npm run ${APP_MODE:-start}"
+    command: npm start
 
   redis:
     image: redis:7-alpine
